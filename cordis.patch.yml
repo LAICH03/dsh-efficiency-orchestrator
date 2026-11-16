@@ -1,0 +1,19 @@
+# dsh bundle patch: mounts this plugin into the profile's Cordis tree.
+#
+# Every config field is optional. Defaults keep the tool/streaming/session layers
+# mounted, leave the batch policy section OFF (opt-in), and make the session
+# fallback counter inactive. Uncomment and adjust to taste:
+#
+#   config:
+#     execution:
+#       batch:
+#         enabled: true      # register dsh-efficiency-orchestrator:batch-policy
+#         order: 9550        # clamped to 9550-9599
+#       notice: true         # post-compaction notice (needs the batch section)
+#     session:
+#       hardStop: false      # reject a step once the budget is exceeded
+#       fallbackStepLimit: 0 # 0 = self-built counter never triggers
+#       warnWithin: 2
+- insert:
+    - id: dsh-efficiency-orchestrator
+      name: 'dsh-efficiency-orchestrator'
