@@ -329,4 +329,4 @@ npm pack --dry-run   # 查看将被打包的文件
 
 ## License
 
-[MIT](./LICENSE) © 2026 dsh-efficiency-orchestrator contributors
+[MIT](./LICENSE) © 2026 dsh-efficiency-orchestrator LAICH03
