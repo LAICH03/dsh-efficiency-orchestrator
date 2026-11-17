@@ -209,7 +209,9 @@ function tailBodies(value: string): boolean {
  * @returns the verdict; `loop: false` on any non-hit, never a throw by design.
  */
 export function detectStrongLoop(value: string, config: StreamGuardConfig): LoopVerdict {
-  const tier = TIERS[config.sensitivity]
+  // Fall back to the shipped tier if a caller supplies an unknown sensitivity
+  // (the type rejects it, but configuration is not always typed at the edge).
+  const tier = TIERS[config.sensitivity] ?? TIERS.normal
   const short = value.length < config.chatMax
   const { recycle, unique } = recycleStats(value)
   const ritualMin = short ? tier.chatRitualCount : tier.ritualCount

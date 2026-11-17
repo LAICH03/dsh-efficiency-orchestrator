@@ -234,8 +234,14 @@ export class StreamingLayer {
  * A runaway reasoning block can reach hundreds of thousands of characters; the
  * head keeps the beginning of the thought and the tail keeps the loop evidence.
  */
+/** Elision marker between the retained head and tail of a reasoning block. */
+const SEPARATOR = '\n…\n'
+
 function capText(text: string, maxChars: number): string {
   if (text.length <= maxChars) return text
-  const head = Math.min(400, maxChars)
-  return text.slice(0, head) + '\n…\n' + text.slice(text.length - (maxChars - head))
+  // Keep the separator inside the budget so the retained text never exceeds
+  // `maxChars`, even when a caller configures a cap smaller than the head.
+  const head = Math.min(400, Math.max(0, maxChars - SEPARATOR.length))
+  const tail = Math.max(0, maxChars - head - SEPARATOR.length)
+  return text.slice(0, head) + SEPARATOR + (tail > 0 ? text.slice(text.length - tail) : '')
 }

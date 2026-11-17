@@ -17,6 +17,18 @@ export interface FeatureToggle {
   readonly enabled?: boolean
 }
 
+/** Tool-layer switches. */
+export interface ToolLayerConfig {
+  /** Mount the tool layer at all; defaults to true. */
+  readonly enabled?: boolean
+  /**
+   * Inject the "official tools are disabled" notice into the system prompt once
+   * OPS takeover succeeds; defaults to true. The notice is still conditional per
+   * Agent, so an Agent that was not taken over never sees it.
+   */
+  readonly warning?: boolean
+}
+
 /** Batch policy switches and placement. */
 export interface BatchPolicyConfig {
   /** Register `dsh-efficiency-orchestrator:batch-policy`. Defaults to false. */
@@ -54,8 +66,8 @@ export interface SessionConfig {
 
 /** Raw plugin config accepted from the bundle row. */
 export interface OrchestratorConfig {
-  /** Tool layer switch; defaults to true. */
-  readonly toolLayer?: FeatureToggle
+  /** Tool layer switches; enabled defaults to true, warning defaults to true. */
+  readonly toolLayer?: ToolLayerConfig
   /** Streaming guard switch; defaults to true. */
   readonly streaming?: FeatureToggle
   readonly execution?: ExecutionConfig
@@ -64,7 +76,7 @@ export interface OrchestratorConfig {
 
 /** Normalized config consumed by the scheduler and its layers. */
 export interface ResolvedOrchestratorConfig {
-  readonly toolLayer: { readonly enabled: boolean }
+  readonly toolLayer: { readonly enabled: boolean; readonly warning: boolean }
   readonly streaming: { readonly enabled: boolean }
   readonly execution: {
     readonly enabled: boolean
@@ -130,7 +142,12 @@ export function resolveConfig(raw: unknown): ResolvedOrchestratorConfig {
   const batch = asRecord(execution.batch) ?? {}
   const session = asRecord(root.session) ?? {}
   return {
-    toolLayer: { enabled: readBoolean(toolLayer.enabled, true) },
+    toolLayer: {
+      enabled: readBoolean(toolLayer.enabled, true),
+      // Essential UX: an Agent told nothing would first try the official name and
+      // burn a step on `unknown tool`. On by default; still conditional per Agent.
+      warning: readBoolean(toolLayer.warning, true),
+    },
     streaming: { enabled: readBoolean(streaming.enabled, true) },
     execution: {
       enabled: readBoolean(execution.enabled, true),

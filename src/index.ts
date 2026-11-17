@@ -214,7 +214,7 @@ export class OrchestratorScheduler implements SchedulerHost {
   private async mountAll(): Promise<void> {
     const config = this.config
     if (config.toolLayer.enabled) {
-      await this.mount('tools', () => new ToolLayer(this.ctx, this).start())
+      await this.mount('tools', () => new ToolLayer(this.ctx, this, config).start())
     } else {
       this.updateStatus('tools', 'disabled', 'tool layer disabled by config')
       this.diagnostic('debug', 'scheduler', 'tool layer disabled by config')

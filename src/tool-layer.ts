@@ -39,12 +39,14 @@ import {
   onAgentCreated,
   onAgentDisposed,
   scopedToolsOf,
+  systemPromptOf,
   toolsOf,
   visibleToolOf,
   type HostToolDefinition,
   type HostToolResult,
   type HostTools,
 } from './host.js'
+import type { ResolvedOrchestratorConfig } from './config.js'
 import {
   describeError,
   type SchedulerHost,
@@ -64,6 +66,15 @@ export const OFFICIAL_TOOL_IDS: readonly string[] = OPS_TOOL_PAIRS.map(pair => p
 
 /** OPS ids the layer publishes or detects. */
 export const OPS_TOOL_IDS: readonly string[] = OPS_TOOL_PAIRS.map(pair => pair.ops)
+
+/** System-prompt section naming the official tools that were replaced. */
+export const TAKEOVER_SECTION_NAME = 'dsh-efficiency-orchestrator:tool-takeover'
+
+/**
+ * Placement inside this plugin's reserved block: batch policy `9550–9599`,
+ * takeover notice `9600–9699`, session budget `9700–9799`.
+ */
+export const TAKEOVER_SECTION_ORDER = 9600
 
 /**
  * Pick the read-only tool ids one scope can actually call.
@@ -118,6 +129,7 @@ interface AgentPublication {
 export class ToolLayer {
   private readonly ctx: Context
   private readonly scheduler: SchedulerHost
+  private readonly config: ResolvedOrchestratorConfig
   /** OPS ids this layer registered at profile scope. */
   private readonly globalOps = new Set<string>()
   /** Profile-scope alias disposers, released explicitly on unload. */
@@ -130,11 +142,13 @@ export class ToolLayer {
   private hooksInstalled = false
   private perAgentMode = false
   private perAgentReported = false
+  private noticeInstalled = false
   private failureReported = false
 
-  constructor(ctx: Context, scheduler: SchedulerHost) {
+  constructor(ctx: Context, scheduler: SchedulerHost, config: ResolvedOrchestratorConfig) {
     this.ctx = ctx
     this.scheduler = scheduler
+    this.config = config
   }
 
   /**
@@ -306,6 +320,7 @@ export class ToolLayer {
 
     for (const dispose of disposers) this.globalDisposers.push(dispose)
     for (const id of registered) this.globalOps.add(id)
+    this.installTakeoverNotice()
     return true
   }
 
@@ -535,6 +550,7 @@ export class ToolLayer {
     }
 
     this.agentStates.set(key, publication)
+    this.installTakeoverNotice()
     if (!this.perAgentReported) {
       this.perAgentReported = true
       this.scheduler.updateStatus(
@@ -557,6 +573,63 @@ export class ToolLayer {
       )
     }
     return true
+  }
+
+  /**
+   * Register the conditional "official tools are disabled" notice.
+   *
+   * The section is registered once, only after a takeover actually succeeded,
+   * and its text is resolved per assembly: an Agent that still sees an official
+   * name (different preset, external provider, failed takeover) renders nothing.
+   * Empty text is dropped by the prompt renderer, so the notice never leaks into
+   * a scope that was not taken over.
+   */
+  private installTakeoverNotice(): void {
+    if (this.noticeInstalled || !this.config.toolLayer.warning) return
+    const prompt = systemPromptOf(this.ctx)
+    if (prompt === undefined) {
+      this.scheduler.diagnostic('debug', 'tools', 'systemPrompt unavailable; tool takeover notice not injected')
+      return
+    }
+    try {
+      prompt.section({
+        name: TAKEOVER_SECTION_NAME,
+        order: TAKEOVER_SECTION_ORDER,
+        text: context => this.takeoverNotice(context.agent),
+      })
+    } catch (error) {
+      this.scheduler.diagnostic('warn', 'tools', `tool takeover notice registration failed: ${describeError(error)}`)
+      return
+    }
+    this.noticeInstalled = true
+    this.scheduler.diagnostic(
+      'debug',
+      'tools',
+      `tool takeover notice registered (order ${TAKEOVER_SECTION_ORDER}, conditional per Agent)`,
+    )
+  }
+
+  /**
+   * Build the takeover notice for one assembly.
+   *
+   * Fires only for an Agent that actually lost an official tool and gained its
+   * OPS alias, so the model is never told about a replacement it cannot use.
+   *
+   * @param agent - Agent of the assembly being rendered, when the Host supplies it.
+   * @returns the warning text, or `''` when this Agent was not taken over.
+   */
+  private takeoverNotice(agent: unknown): string {
+    if (!isRecord(agent)) return ''
+    const replaced: Array<{ official: string; ops: string }> = []
+    for (const pair of OPS_TOOL_PAIRS) {
+      if (this.visibleInAgent(pair.ops, agent) === undefined) continue
+      if (this.visibleInAgent(pair.official, agent) !== undefined) continue
+      replaced.push(pair)
+    }
+    if (replaced.length === 0) return ''
+    const officials = replaced.map(pair => `\`${pair.official}\``).join(' / ')
+    const aliases = replaced.map(pair => `\`${pair.ops}\``).join(' / ')
+    return `⚠️ 工具替换：官方 ${officials} 工具已被禁用，请直接使用 ${aliases} 进行读取与搜索；不要调用已禁用的官方工具名。`
   }
 
   /** Lift and forget one Agent's takeover; its own disposal is idempotent. */

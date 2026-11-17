@@ -85,6 +85,7 @@ function buildBatchPolicyText(toolIds: readonly string[]): string {
 
 /** Read the durable session id from an agent object, tolerating live shapes. */
 function sessionIdOfAgent(agent: HostPreStepPayload['agent']): string | undefined {
+  if (!isRecord(agent)) return undefined
   if (typeof agent.id === 'string') return agent.id
   const session = agent.session
   if (isRecord(session) && typeof session.id === 'string') return session.id

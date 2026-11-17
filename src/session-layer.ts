@@ -315,11 +315,14 @@ export class SessionLayer {
       if (!this.scheduler.isRunning()) return next()
       const budget = this.budget
       if (budget === undefined) return next()
-      const sessionId = typeof payload.agent.id === 'string'
-        ? payload.agent.id
-        : isRecord(payload.agent.session) && typeof payload.agent.session.id === 'string'
-          ? payload.agent.session.id
-          : undefined
+      const agent = payload.agent
+      const sessionId = !isRecord(agent)
+        ? undefined
+        : typeof agent.id === 'string'
+          ? agent.id
+          : isRecord(agent.session) && typeof agent.session.id === 'string'
+            ? agent.session.id
+            : undefined
       if (sessionId === undefined) return next()
 
       const state = this.stateOf(sessionId)
