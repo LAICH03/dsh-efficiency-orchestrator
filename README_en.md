@@ -1,3 +1,5 @@
+[简体中文](./README.md) | **English**
+
 # dsh-efficiency-orchestrator
 
 **One plugin, two kinds of leverage.** A runtime plugin for [DeepSeek Harness](https://deepseek.com/harness) (DSH) that runs four turn/step-efficiency capabilities under a single in-process scheduler for one Host lifetime: OPS read-only tool takeover, reasoning-loop breaking, batch tool-call suggestions, and session-budget guards.
