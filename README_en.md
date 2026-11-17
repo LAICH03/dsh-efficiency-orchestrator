@@ -86,20 +86,33 @@ The `ctx.tools` / `ctx.systemPrompt` / `ctx.on('agent/created')` / `ctx.on('agen
 
 ## Installation
 
-The repository is **not published to npm**; `lib/` is a build artifact and is not committed. Build from source, then install the local directory:
+The plugin is published to npm as `dsh-efficiency-orchestrator`. Install it with the DSH CLI — npm serves the prebuilt `lib/`, so no local build is needed:
+
+```bash
+dsh plugin --profile desktop add dsh-efficiency-orchestrator
+```
+
+Use another profile (for example `--profile web`) if needed, then restart DSH.
+
+Fallback: install straight from the GitHub repository. npm clones the sources, installs devDependencies, and runs `prepare` to build:
+
+```bash
+dsh plugin --profile desktop add github:LAICH03/dsh-efficiency-orchestrator
+```
+
+### From source / a local directory
+
+For development, clone the repository, build locally, then install the directory:
 
 ```bash
 npm install          # build-time devDependencies
-npm run typecheck    # optional
 npm run build        # emits lib/index.js and lib/types/
 ```
-
-Then choose one:
 
 1. **Web / Desktop Plugins panel:** Plugins → Add plugin → select this directory.
 2. **DSH CLI:** `dsh plugin --profile <profile> add <absolute path to this directory>`.
 
-> Make sure `lib/index.js` and `lib/types/index.d.ts` exist first; a local-directory install resolves `package.json#exports["."].default = ./lib/index.js` directly.
+> A local-directory install resolves `package.json#exports["."].import = ./lib/index.js` directly, so make sure `lib/index.js` and `lib/types/index.d.ts` exist first.
 
 ### What to expect after installation
 

@@ -104,21 +104,36 @@ Plugins 面板与宿主诊断中确认当前路径。
 
 ## 安装
 
-本仓库**不发布到 npm**，`lib/` 是构建产物且不提交到 Git。请从源码构建后以本地目录安装：
+本插件已发布到 npm，包名为 `dsh-efficiency-orchestrator`。推荐直接用 DSH CLI 安装
+（npm 分发的是已构建好的 `lib/`，无需本地编译）：
+
+```bash
+dsh plugin --profile desktop add dsh-efficiency-orchestrator
+```
+
+其他 profile 同理，例如 `--profile web`；安装完成后重启 DSH 生效。
+
+备选：直接从 GitHub 仓库安装。npm 会克隆源码、安装 devDependencies 并自动执行
+`prepare` 构建：
+
+```bash
+dsh plugin --profile desktop add github:LAICH03/dsh-efficiency-orchestrator
+```
+
+### 从源码 / 本地目录安装
+
+开发或调试时可以克隆仓库、本地构建后以目录形式安装：
 
 ```bash
 npm install          # 安装构建期 devDependencies
-npm run typecheck    # 可选
 npm run build        # 产出 lib/index.js 与 lib/types/
 ```
-
-然后二选一：
 
 1. **Web / Desktop 插件面板**：Plugins → Add plugin → 选择本目录；
 2. **DSH CLI**：`dsh plugin --profile <profile> add <本目录的绝对路径>`。
 
-> 安装前请确认 `lib/index.js` 与 `lib/types/index.d.ts` 已存在；本地目录安装会直接解析
-> `package.json#exports["."].default = ./lib/index.js`。
+> 本地目录安装会直接解析 `package.json#exports["."].import = ./lib/index.js`，
+> 因此请先确认 `lib/index.js` 与 `lib/types/index.d.ts` 已存在。
 
 ### 安装成功后可预期
 

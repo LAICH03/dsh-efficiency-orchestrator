@@ -1,12 +1,20 @@
 {
   "name": "dsh-efficiency-orchestrator",
   "version": "0.1.0",
-  "private": true,
   "description": "One plugin that replaces DSH's read/glob/grep with ops_* aliases and orchestrates batching, loop-breaking, and budget guards to save tokens and steps.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LAICH03/dsh-efficiency-orchestrator.git"
+  },
+  "homepage": "https://github.com/LAICH03/dsh-efficiency-orchestrator#readme",
+  "bugs": {
+    "url": "https://github.com/LAICH03/dsh-efficiency-orchestrator/issues"
+  },
   "keywords": [
     "dsh",
     "dsh-plugin",
+    "deepseek",
     "deepseek-harness",
     "ops",
     "reasoning-loop",
@@ -19,18 +27,24 @@
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
       "default": "./lib/index.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
-    "src",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README.md",
+    "README_en.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20",
